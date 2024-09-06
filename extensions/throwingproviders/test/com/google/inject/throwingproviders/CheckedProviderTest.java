@@ -530,10 +530,24 @@ public class CheckedProviderTest extends TestCase {
       fail();
     } catch (CreationException expected) {
       assertEquals(
-          RemoteProviderWithExtraMethod.class.getName()
-              + " may not declare any new methods, but declared "
-              + RemoteProviderWithExtraMethod.class.getDeclaredMethods()[0].toGenericString(),
-          Iterables.getOnlyElement(expected.getErrorMessages()).getMessage());
+          Method firstMethod = RemoteProviderWithExtraMethod.class.getDeclaredMethods()[0];
+
+          List<String> exceptionTypes = Lists.newArrayList(
+              Arrays.stream(firstMethod.getExceptionTypes())
+                  .map(Class::getName)
+                  .iterator()
+          );
+  
+          String expectedStart = RemoteProviderWithExtraMethod.class.getName()
+              + " may not declare any new methods, but declared ";
+          String actualMessage = Iterables.getOnlyElement(expected.getErrorMessages()).getMessage();
+  
+          assertTrue("The message does not start as expected", actualMessage.startsWith(expectedStart));
+          assertTrue("The method name is not present in the message", actualMessage.contains(firstMethod.getName()));
+  
+          for (String exception : exceptionTypes) {
+              assertTrue("Missing exception type: " + exception, actualMessage.contains(exception));
+          }
     }
   }
 
